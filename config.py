@@ -52,6 +52,7 @@ class Config:
     max_tracks_per_job: int        # سقف آهنگ در هر سفارش
     telegram_file_limit_mb: int    # سقف آپلود بوت‌های تلگرام
     download_dir: str              # پوشهٔ فایل‌های موقت
+    data_dir: str                  # پوشهٔ آمار و تنظیمات (روی Railway با volume)
     rate_limit_seconds: float      # فاصلهٔ بین دو دانلود در یک چت
     job_ttl_seconds: int           # اعتبار دکمه‌های شیشه‌ای
     log_level: str
@@ -87,6 +88,7 @@ def load_config() -> Config:
         max_tracks_per_job=max(1, _int("MAX_TRACKS_PER_JOB", 20)),
         telegram_file_limit_mb=max(1, _int("TELEGRAM_FILE_LIMIT_MB", 49)),
         download_dir=_str("DOWNLOAD_DIR", "downloads") or "downloads",
+        data_dir=_str("DATA_DIR", "data") or "data",
         rate_limit_seconds=max(0.0, _float("RATE_LIMIT_SECONDS", 15)),
         job_ttl_seconds=max(60, _int("JOB_TTL_SECONDS", 900)),
         log_level=(_str("LOG_LEVEL", "INFO") or "INFO").upper(),

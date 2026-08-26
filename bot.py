@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 import aiohttp
 from aiogram import Bot, Dispatcher
@@ -61,8 +62,8 @@ async def main() -> None:
             http=http,
             spotify=spotify,
             dl=dl,
-            stats=Stats("data/stats.json"),
-            settings=UserSettings("data/settings.json"),
+            stats=Stats(os.path.join(cfg.data_dir, "stats.json")),
+            settings=UserSettings(os.path.join(cfg.data_dir, "settings.json")),
             jobs=JobStore(cfg.job_ttl_seconds),
             cooldown=ChatCooldown(cfg.rate_limit_seconds),
         )

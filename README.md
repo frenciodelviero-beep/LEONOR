@@ -45,6 +45,7 @@ spotify-bot/
 ├── .env.example
 ├── Dockerfile
 ├── docker-compose.yml
+├── railway.json           # پیکربندی Railway (بیلدر Dockerfile + restart ALWAYS)
 └── README.md
 ```
 
@@ -94,6 +95,42 @@ docker compose up -d --build
 docker compose logs -f
 ```
 
+## 🚂 دیپلوی روی Railway (ساده‌ترین راه)
+
+ربات **long polling** استفاده می‌کنه، پس نیازی به public network/پورت باز نیست — روی Railway عالی می‌نشیند.
+
+### مراحل
+
+1. **ریپازیتوری رو push کن** (GitHub/GitLab). `.env` توی `.gitignore` هست و upload نمی‌شه — حتماً همین‌طور باشه.
+2. وارد [railway.app](https://railway.app) شو → **New Project → Deploy from GitHub repo** → ریپازیتوری رو انتخاب کن.
+3. توی داشبورد: **Service → Variables** و متغیرها رو بزن:
+   - `BOT_TOKEN` (الزامی)
+   - `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` (اختیاری، برای آلبوم/پلی‌لیست)
+   - بقیه (کیفیت، rate-limit و …) اختیاری‌ان — پیش‌فرض‌ها مناسب‌اند.
+4. **Build خودکار** انجام می‌شه: `railway.json` بیلدر رو روی `DOCKERFILE` قفل کرده، پس همون `Dockerfile` پروژه اجرا می‌شه و `ffmpeg` هم خودکار نصب می‌شه. (اگر بیلدر روی Railpack/Nixpacks موند، دستی از Settings روی **Dockerfile** بگذار.)
+5. توی تب **Deployments** لاگ‌ها رو ببین — وقتی `🚀 polling شروع شد` دیدی، بات زنده‌ست!
+
+### 💾 ماندگاری داده (Volume)
+
+فایل‌سیستم Railway با هر دیپلی ریست می‌شه. برای اینکه **آمار و تنظیمات کاربر** پاک نشوند:
+
+1. داشبورد → **Service → Volumes → Add Volume** → مسیر: `/data`
+   (یا با CLI: `railway add-volume --path /data`)
+2. توی **Variables** این دو را اضافه کن:
+   ```
+   DATA_DIR=/data
+   DOWNLOAD_DIR=/data/downloads
+   ```
+3. دوباره deploy کن. از این به بعد `stats.json` و `settings.json` روی volume ذخیره می‌شوند.
+
+> بدون Volume هم همه‌چیز کار می‌کنه — فقط آمار و کیفیت شخصی بعد از هر دیپلی صفر می‌شود.
+
+### ⚙️ نکات Railway
+
+- **Restart policy** روی `ALWAYS` تنظیم شده (`railway.json`) — اگر ربات کرش کند، خودکار برمی‌گردد.
+- پولینگ یعنی **سقف درخواست شبکه‌ای خاصی نداریم**، ولی مصرف CPU/حافظه در هر لحظه محاسبه می‌شود؛ دانلودهای سنگین هم‌زمان پشت `Semaphore(3)` صف می‌شوند و فشار زیاد نمی‌شود.
+- اگه بیلد خراب بود، مطمئن شو `ffmpeg` توی Dockerfile هنوز هست (Railway آن را با apt نصب می‌کند).
+
 ## 🖥 systemd (اجرای دائمی روی سرور)
 
 `/etc/systemd/system/spotify-bot.service`:
@@ -133,7 +170,8 @@ journalctl -u spotify-bot -f
 | `MAX_TRACKS_PER_JOB` | `20` | سقف آهنگ در هر آلبوم/پلی‌لیست |
 | `RATE_LIMIT_SECONDS` | `15` | فاصلهٔ بین دو دانلود در هر چت (0 = آزاد) |
 | `JOB_TTL_SECONDS` | `900` | اعتبار دکمه‌های انتخاب کیفیت |
-| `DOWNLOAD_DIR` | `downloads` | پوشهٔ فایل‌های موقت |
+| `DOWNLOAD_DIR` | `downloads` | پوشهٔ فایل‌های موقت (روی Railway: `/data/downloads`) |
+| `DATA_DIR` | `data` | پوشهٔ آمار و تنظیمات (روی Railway: `/data`) |
 | `LOG_LEVEL` | `INFO` | سطح لاگ |
 
 ## 📜 دستورات ربات

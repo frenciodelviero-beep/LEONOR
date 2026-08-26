@@ -1,0 +1,9 @@
+services:
+  spotify-bot:
+    build: .
+    container_name: spotify-bot
+    env_file: .env
+    volumes:
+      - ./downloads:/app/downloads
+      - ./data:/app/data
+    restart: unless-stopped
